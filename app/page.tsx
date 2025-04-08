@@ -9,7 +9,18 @@ import toast from "react-hot-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star } from "lucide-react";
 
-const menuCategories = {
+interface MenuItem {
+  id: number;
+  name: string;
+  price: number;
+  rating: number;
+}
+
+interface MenuCategory {
+  [key: string]: MenuItem[];
+}
+
+const menuCategories: MenuCategory = {
   snacks: [
     { id: 1, name: "Veg Sandwich", price: 40, rating: 4.5 },
     { id: 2, name: "Maggie", price: 30, rating: 4.2 },
@@ -29,23 +40,23 @@ const menuCategories = {
 
 export default function CampusDeliveryApp() {
   const { data: session } = useSession();
-  const [cart, setCart] = useState([]);
-  const [orderStatus, setOrderStatus] = useState(null);
-  const [activeTab, setActiveTab] = useState("snacks");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [cart, setCart] = useState<MenuItem[]>([]);
+  const [orderStatus, setOrderStatus] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("snacks");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const addToCart = (item) => {
+  const addToCart = (item: MenuItem) => {
     setCart((prev) => [...prev, item]);
     toast.success(`${item.name} added to cart!`);
   };
 
-  const removeFromCart = (itemId) => {
+  const removeFromCart = (itemId: number) => {
     setCart((prev) => prev.filter((item) => item.id !== itemId));
     toast.error("Item removed from cart");
   };
 
   const placeOrder = async () => {
-    if (!session) {
+    if (!session?.user) {
       toast.error("Please sign in to place an order");
       return;
     }
@@ -56,8 +67,8 @@ export default function CampusDeliveryApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           items: cart,
-          userId: session.user.id,
-          userName: session.user.name
+          userId: session.user.email, // Using email instead of id
+          userName: session.user.name || "Anonymous"
         }),
       });
       const data = await response.json();
@@ -79,9 +90,9 @@ export default function CampusDeliveryApp() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Campus Delivery App</h1>
-          {session ? (
+          {session?.user ? (
             <div className="flex items-center gap-4">
-              <span>Welcome, {session.user.name}</span>
+              <span>Welcome, {session.user.name || "User"}</span>
               <Button variant="outline" onClick={() => signOut()}>
                 Sign Out
               </Button>
